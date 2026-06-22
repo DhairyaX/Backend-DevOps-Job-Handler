@@ -7,3 +7,4 @@ redis==5.0.4
 celery==5.4.0
 pydantic==2.7.2
 pydantic-settings==2.2.1
+pandas==2.2.2
