@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    # Uvicorn is the server that runs the FastAPI application
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      # Sync current directory to /app in container (so edits appear immediately)
+      - .:/app
+    ports:
+      - "8000:8000"
+    environment:
+      - POSTGRES_SERVER=db
+      - REDIS_HOST=redis
+    depends_on:
+      - db
+      - redis
+
+  db:
+    image: postgres:15-alpine
+    volumes:
+      # Persist database data even if container is destroyed
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=app_db
+    ports:
+      - "5433:5432"
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6380:6379"
+
+  celery_worker:
+    build: .
+    # Starts the celery worker process
+    command: celery -A app.core.celery_app worker --loglevel=info
+    volumes:
+      - .:/app
+    environment:
+      - POSTGRES_SERVER=db
+      - REDIS_HOST=redis
+    depends_on:
+      - redis
+      - db
+
+volumes:
+  # Define named volume for postgres
+  postgres_data:
