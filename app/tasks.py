@@ -4,6 +4,7 @@ from app.core.celery_app import celery_app
 from app.db.database import SessionLocal
 from app.models.job import Job
 from app.models.transaction import Transaction
+from app.services.anomaly_service import detect_anomalies
 
 UPLOAD_DIR = "uploads"
 
@@ -57,8 +58,14 @@ def process_csv(job_id: int):
             # Also replace empty strings
             df.loc[df['category'] == '', 'category'] = "Uncategorised"
             
+        # Apply anomaly detection
+        df = detect_anomalies(df)
+            
         # Drop columns that are not in our database model
-        expected_columns = ['txn_id', 'date', 'merchant', 'amount', 'currency', 'status', 'category', 'account_id']
+        expected_columns = [
+            'txn_id', 'date', 'merchant', 'amount', 'currency', 
+            'status', 'category', 'account_id', 'is_anomaly', 'anomaly_reason'
+        ]
         df = df[[col for col in expected_columns if col in df.columns]]
         
         row_count_clean = len(df)

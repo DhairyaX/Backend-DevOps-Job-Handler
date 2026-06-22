@@ -1,0 +1,2 @@
+﻿txn_id,date,merchant,amount,currency,status,category,account_id
+TEST001,06-01-2024,Swiggy,500,USD,SUCCESS,Food,ACC001
