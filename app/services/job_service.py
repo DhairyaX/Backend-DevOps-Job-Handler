@@ -26,4 +26,8 @@ def create_job_and_save_file(db: Session, file: UploadFile) -> Job:
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
+    # 3. Queue the background processing task using Celery
+    from app.tasks import process_csv
+    process_csv.delay(new_job.id)
+
     return new_job
