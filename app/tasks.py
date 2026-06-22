@@ -5,6 +5,8 @@ from app.db.database import SessionLocal
 from app.models.job import Job
 from app.models.transaction import Transaction
 from app.services.anomaly_service import detect_anomalies
+from app.services.llm_service import categorize_transaction
+from app.services.summary_service import generate_job_summary
 
 UPLOAD_DIR = "uploads"
 
@@ -55,16 +57,40 @@ def process_csv(job_id: int):
         # Fill missing categories with "Uncategorised"
         if 'category' in df.columns:
             df['category'] = df['category'].fillna("Uncategorised")
-            # Also replace empty strings
             df.loc[df['category'] == '', 'category'] = "Uncategorised"
             
+        # Initialize LLM columns
+        df['llm_category'] = None
+        df['llm_raw_response'] = None
+        df['llm_failed'] = False
+        
+        # Call Gemini for "Uncategorised" transactions
+        # We iterate over the index of matching rows
+        uncategorised_mask = df['category'] == "Uncategorised"
+        for idx in df[uncategorised_mask].index:
+            row = df.loc[idx]
+            category, raw_response, failed = categorize_transaction(
+                merchant=str(row.get('merchant', '')),
+                amount=float(row.get('amount', 0.0)),
+                currency=str(row.get('currency', '')),
+                date=str(row.get('date', ''))
+            )
+            df.at[idx, 'llm_category'] = category
+            df.at[idx, 'llm_raw_response'] = raw_response
+            df.at[idx, 'llm_failed'] = failed
+            
+            # Optionally, override the main category with the LLM category if successful
+            if not failed and category != "Other":
+                df.at[idx, 'category'] = category
+                
         # Apply anomaly detection
         df = detect_anomalies(df)
             
         # Drop columns that are not in our database model
         expected_columns = [
             'txn_id', 'date', 'merchant', 'amount', 'currency', 
-            'status', 'category', 'account_id', 'is_anomaly', 'anomaly_reason'
+            'status', 'category', 'account_id', 'is_anomaly', 'anomaly_reason',
+            'llm_category', 'llm_raw_response', 'llm_failed'
         ]
         df = df[[col for col in expected_columns if col in df.columns]]
         
@@ -85,8 +111,12 @@ def process_csv(job_id: int):
                 
         # Bulk insert
         db.bulk_insert_mappings(Transaction, records)
+        db.commit() # Commit transactions so the summary service can query them
         
-        # 5. Update job status to completed
+        # 5. Generate Job Summary
+        generate_job_summary(db, job.id)
+        
+        # 6. Update job status to completed
         job.status = "completed"
         db.commit()
         print(f"Job {job_id} completed successfully. Raw: {row_count_raw}, Clean: {row_count_clean}")

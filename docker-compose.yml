@@ -13,6 +13,7 @@ services:
     environment:
       - POSTGRES_SERVER=db
       - REDIS_HOST=redis
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
     depends_on:
       - db
       - redis
@@ -43,6 +44,7 @@ services:
     environment:
       - POSTGRES_SERVER=db
       - REDIS_HOST=redis
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
     depends_on:
       - redis
       - db

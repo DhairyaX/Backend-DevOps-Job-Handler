@@ -14,6 +14,9 @@ class Settings(BaseSettings):
     REDIS_HOST: str = "redis"
     REDIS_PORT: str = "6379"
 
+    # AI Settings
+    GEMINI_API_KEY: str = ""
+
     @property
     def DATABASE_URL(self) -> str:
         # e.g. postgresql://postgres:postgres@db:5432/app_db

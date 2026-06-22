@@ -1,0 +1,70 @@
+# Python
+**pycache**/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual Environments
+venv/
+.venv/
+env/
+ENV/
+
+# Environment Variables
+.env
+.env.*
+
+# IDEs
+.vscode/
+.idea/
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# Python Packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Logs
+*.log
+logs/
+
+# Uploads
+uploads/
+*.csv
+
+# Database Files
+*.db
+*.sqlite3
+
+# Docker
+docker-compose.override.yml
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Temporary Files
+tmp/
+temp/
+*.tmp
+
+# Alembic (if generated later)
+alembic/versions/*.pyc
+
+# Secrets
+secrets.json
+credentials.json
+service-account.json
+
+# Misc
+*.swp
+*.swo
+*.bak
